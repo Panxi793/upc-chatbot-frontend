@@ -48,16 +48,6 @@ export default function Navbar() {
             >
               Knowledge Base
             </Link>
-            <Link
-              href="/admin/documents"
-              className={`${
-                pathname === '/admin/documents'
-                  ? 'text-white border-b-2 border-white'
-                  : 'text-white/90 hover:text-white hover:border-b-2 hover:border-white/50'
-              } transition-colors duration-200 h-24 flex items-center text-lg`}
-            >
-              Documents
-            </Link>
           </div>
 
           <div className="flex items-center">

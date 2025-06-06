@@ -138,8 +138,14 @@ export const documentApi = {
   },
 
   // List document chunks with pagination
-  listDocumentChunks: async (page: number = 1): Promise<ChunkResponse> => {
-    const response = await fetch(`${API_BASE_URL}/ai/simple-document-chunk/?page=${page}`, {
+  listDocumentChunks: async (page: number = 1, documentId?: number): Promise<ChunkResponse> => {
+    const url = new URL(`${API_BASE_URL}/ai/simple-document-chunk/`);
+    url.searchParams.append('page', page.toString());
+    if (documentId) {
+      url.searchParams.append('document_id', documentId.toString());
+    }
+
+    const response = await fetch(url.toString(), {
       headers: getHeaders(),
     });
     if (!response.ok) {

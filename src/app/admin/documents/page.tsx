@@ -1,29 +1,33 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
-import UploadModal from '@/components/UploadModal';
-import { Document, DocumentChunk, PaginatedResponse, documentApi } from '@/services/api';
+import { Document, DocumentChunk, documentApi } from '@/services/api';
 
 interface ChunkWithExpanded extends DocumentChunk {
   isExpanded: boolean;
 }
 
-export default function DocumentListPage() {
-  const [documents, setDocuments] = useState<Document[]>([]);
+export default function DocumentChunksPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const documentId = searchParams.get('id');
+
+  const [document, setDocument] = useState<Document | null>(null);
   const [chunks, setChunks] = useState<ChunkWithExpanded[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
-  // Fetch document chunks
+  // Fetch document chunks for specific document
   const fetchChunks = async (page: number) => {
+    if (!documentId) return;
+    
     try {
       setError(null);
-      const response = await documentApi.listDocumentChunks(page);
+      const response = await documentApi.listDocumentChunks(page, parseInt(documentId));
       
       if (response && response.objects) {
         const mappedChunks = response.objects.map(chunk => ({
@@ -34,37 +38,38 @@ export default function DocumentListPage() {
         setTotalPages(response.num_pages);
       }
     } catch (err) {
-      console.error('Error fetching chunks:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch document chunks');
     }
   };
 
-  // Fetch documents
-  const fetchDocuments = async () => {
+  // Fetch document details
+  const fetchDocument = async () => {
+    if (!documentId) return;
+
     try {
       setError(null);
-      const docs = await documentApi.listDocuments();
-      setDocuments(docs);
-      if (docs.length > 0 && !selectedDocument) {
-        setSelectedDocument(docs[0]);
-      }
+      const doc = await documentApi.getDocument(parseInt(documentId));
+      setDocument(doc);
     } catch (err) {
-      console.error('Error fetching documents:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch documents');
+      setError(err instanceof Error ? err.message : 'Failed to fetch document');
     }
   };
 
   useEffect(() => {
+    if (!documentId) {
+      router.push('/admin/knowledge-base');
+      return;
+    }
+
     const loadData = async () => {
       setIsLoading(true);
       setError(null);
       try {
         await Promise.all([
-          fetchDocuments(),
+          fetchDocument(),
           fetchChunks(currentPage)
         ]);
       } catch (err) {
-        console.error('Error loading data:', err);
         setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setIsLoading(false);
@@ -72,71 +77,12 @@ export default function DocumentListPage() {
     };
 
     loadData();
-  }, [currentPage]);
+  }, [documentId, currentPage]);
 
   const toggleChunk = (id: number) => {
     setChunks(chunks.map(chunk =>
       chunk.id === id ? { ...chunk, isExpanded: !chunk.isExpanded } : chunk
     ));
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
-
-    try {
-      setError(null);
-      await documentApi.deleteDocument(id);
-      if (selectedDocument?.id === id) {
-        setSelectedDocument(null);
-      }
-      await Promise.all([
-        fetchDocuments(),
-        fetchChunks(currentPage)
-      ]);
-    } catch (err) {
-      console.error('Error deleting document:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete document');
-    }
-  };
-
-  const handleUpload = async (file: File, description: string) => {
-    try {
-      setError(null);
-      setIsLoading(true);
-      
-      const formData = new FormData();
-      formData.append('file', file);
-      
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to upload file');
-      }
-
-      const { file_url } = await response.json();
-
-      const newDoc = await documentApi.createDocument({
-        file_url,
-        description,
-      });
-
-      setIsUploadModalOpen(false);
-      await Promise.all([
-        fetchDocuments(),
-        fetchChunks(currentPage)
-      ]);
-      setSelectedDocument(newDoc);
-
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload document');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   if (isLoading) {
@@ -156,12 +102,15 @@ export default function DocumentListPage() {
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-lg shadow-lg">
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h1 className="text-2xl font-bold text-up-maroon">Document Chunks</h1>
+            <h1 className="text-2xl font-bold text-up-maroon">
+              {document?.description || 'Document Chunks'}
+            </h1>
             <button
-              onClick={() => setIsUploadModalOpen(true)}
-              className="px-4 py-2 bg-up-maroon text-white rounded-md hover:bg-up-maroon-dark transition-colors duration-200"
+              onClick={() => router.push('/admin/knowledge-base')}
+              className="px-4 py-2 text-up-maroon hover:text-up-maroon-dark flex items-center gap-2 hover:bg-gray-100 rounded-md transition-colors duration-200"
             >
-              Add New Document
+              <span>←</span>
+              <span>Back to Knowledge Base</span>
             </button>
           </div>
 
@@ -172,13 +121,13 @@ export default function DocumentListPage() {
           )}
 
           <div className="p-6">
-            {selectedDocument && (
+            {document && (
               <div className="mb-6 bg-gray-100 p-4 rounded-lg">
                 <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                  {selectedDocument.description || 'UPC Student Handbook.pdf'}
+                  {document.description || 'Untitled Document'}
                 </h2>
                 <p className="text-sm text-gray-600">
-                  Uploaded: {new Date(selectedDocument.created_at).toLocaleString()}
+                  Uploaded: {new Date(document.created_at).toLocaleString()}
                 </p>
               </div>
             )}
@@ -186,11 +135,10 @@ export default function DocumentListPage() {
             <div className="space-y-4">
               {chunks.length === 0 ? (
                 <div className="text-center py-8 text-gray-600">
-                  No document chunks found. Try uploading a document.
+                  No chunks found for this document.
                 </div>
               ) : (
                 chunks.map((chunk, index) => {
-                  // Calculate the chunk number based on current page
                   const chunkNumber = (currentPage - 1) * 10 + index + 1;
                   
                   return (
@@ -258,12 +206,6 @@ export default function DocumentListPage() {
           </div>
         </div>
       </div>
-
-      <UploadModal
-        isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
-        onUpload={handleUpload}
-      />
     </div>
   );
 } 
