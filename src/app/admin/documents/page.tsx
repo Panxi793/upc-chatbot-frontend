@@ -17,33 +17,47 @@ export default function DocumentListPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
 
   // Fetch document chunks
   const fetchChunks = async (page: number) => {
     try {
-      const response: PaginatedResponse<DocumentChunk> = await documentApi.listDocumentChunks(page);
-      setChunks(response.results.map(chunk => ({ ...chunk, isExpanded: false })));
-      setTotalPages(Math.ceil(response.count / 10)); // Assuming 10 items per page
+      setError(null);
+      const response = await documentApi.listDocumentChunks(page);
+      
+      if (response && response.objects) {
+        const mappedChunks = response.objects.map(chunk => ({
+          ...chunk,
+          isExpanded: false
+        }));
+        setChunks(mappedChunks);
+        setTotalPages(response.num_pages);
+      }
     } catch (err) {
-      setError('Failed to fetch document chunks');
       console.error('Error fetching chunks:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch document chunks');
     }
   };
 
   // Fetch documents
   const fetchDocuments = async () => {
     try {
+      setError(null);
       const docs = await documentApi.listDocuments();
       setDocuments(docs);
+      if (docs.length > 0 && !selectedDocument) {
+        setSelectedDocument(docs[0]);
+      }
     } catch (err) {
-      setError('Failed to fetch documents');
       console.error('Error fetching documents:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch documents');
     }
   };
 
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         await Promise.all([
           fetchDocuments(),
@@ -51,6 +65,7 @@ export default function DocumentListPage() {
         ]);
       } catch (err) {
         console.error('Error loading data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load data');
       } finally {
         setIsLoading(false);
       }
@@ -69,18 +84,26 @@ export default function DocumentListPage() {
     if (!confirm('Are you sure you want to delete this document?')) return;
 
     try {
+      setError(null);
       await documentApi.deleteDocument(id);
-      await fetchDocuments(); // Refresh the documents list
-      await fetchChunks(currentPage); // Refresh the chunks list
+      if (selectedDocument?.id === id) {
+        setSelectedDocument(null);
+      }
+      await Promise.all([
+        fetchDocuments(),
+        fetchChunks(currentPage)
+      ]);
     } catch (err) {
-      setError('Failed to delete document');
       console.error('Error deleting document:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete document');
     }
   };
 
   const handleUpload = async (file: File, description: string) => {
     try {
-      // First, upload the file to S3 (you'll need to implement this)
+      setError(null);
+      setIsLoading(true);
+      
       const formData = new FormData();
       formData.append('file', file);
       
@@ -95,21 +118,24 @@ export default function DocumentListPage() {
 
       const { file_url } = await response.json();
 
-      // Then create the document using the returned S3 URL
-      await documentApi.createDocument({
+      const newDoc = await documentApi.createDocument({
         file_url,
         description,
       });
 
-      // Refresh the documents and chunks
+      setIsUploadModalOpen(false);
       await Promise.all([
         fetchDocuments(),
         fetchChunks(currentPage)
       ]);
+      setSelectedDocument(newDoc);
 
     } catch (err) {
       console.error('Upload error:', err);
-      throw err; // Re-throw to be handled by the modal
+      setError(err instanceof Error ? err.message : 'Failed to upload document');
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -127,113 +153,109 @@ export default function DocumentListPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      <div className="container mx-auto px-2 py-8">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
+      <div className="container mx-auto px-4 py-8">
+        <div className="bg-white rounded-lg shadow-lg">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h1 className="text-2xl font-bold text-up-maroon">Document Chunks</h1>
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setIsUploadModalOpen(true)}
-                className="px-4 py-2 bg-up-maroon text-white rounded-md hover:bg-up-maroon-dark transition-colors duration-200"
-              >
-                Add New Document
-              </button>
-            </div>
+            <button
+              onClick={() => setIsUploadModalOpen(true)}
+              className="px-4 py-2 bg-up-maroon text-white rounded-md hover:bg-up-maroon-dark transition-colors duration-200"
+            >
+              Add New Document
+            </button>
           </div>
 
           {error && (
-            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+            <div className="p-4 bg-red-100 text-red-700 border-b border-gray-200">
               {error}
             </div>
           )}
 
-          <div className="space-y-4">
-            {chunks.map((chunk) => (
-              <div 
-                key={chunk.id} 
-                className="border border-up-gray-200 rounded-lg overflow-hidden transition-all duration-200 hover:shadow-md"
-              >
-                <div
-                  className="flex items-center justify-between p-4 cursor-pointer bg-white hover:bg-up-gray-50"
-                  onClick={() => toggleChunk(chunk.id)}
-                >
-                  <div className="flex items-center space-x-4">
-                    <div className="text-up-maroon">
-                      <svg 
-                        xmlns="http://www.w3.org/2000/svg" 
-                        className="h-6 w-6" 
-                        fill="none" 
-                        viewBox="0 0 24 24" 
-                        stroke="currentColor"
-                      >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" 
-                        />
-                      </svg>
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-semibold text-up-gray-800">
-                        Document Chunk {chunk.id}
-                      </h2>
-                      <p className="text-sm text-up-gray-600">
-                        From Document {chunk.document}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-2xl text-up-gray-500 transform transition-transform duration-200">
-                    {chunk.isExpanded ? '−' : '+'}
-                  </span>
-                </div>
-                {chunk.isExpanded && (
-                  <div className="p-4 bg-up-gray-50 border-t border-up-gray-200">
-                    <p className="text-up-gray-700 whitespace-pre-wrap">{chunk.content}</p>
-                    <div className="mt-4 flex justify-end space-x-3">
-                      <button 
-                        onClick={() => handleDelete(chunk.document)}
-                        className="px-3 py-1 text-sm text-red-600 hover:text-red-700"
-                      >
-                        Delete Document
-                      </button>
-                    </div>
-                  </div>
-                )}
+          <div className="p-6">
+            {selectedDocument && (
+              <div className="mb-6 bg-gray-100 p-4 rounded-lg">
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                  {selectedDocument.description || 'UPC Student Handbook.pdf'}
+                </h2>
+                <p className="text-sm text-gray-600">
+                  Uploaded: {new Date(selectedDocument.created_at).toLocaleString()}
+                </p>
               </div>
-            ))}
-          </div>
+            )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex justify-center space-x-2">
-              <button
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className={`px-4 py-2 rounded-md ${
-                  currentPage === 1
-                    ? 'bg-up-gray-200 text-up-gray-500 cursor-not-allowed'
-                    : 'bg-up-maroon text-white hover:bg-up-maroon-dark'
-                }`}
-              >
-                Previous
-              </button>
-              <span className="px-4 py-2 text-up-gray-600">
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
-                className={`px-4 py-2 rounded-md ${
-                  currentPage === totalPages
-                    ? 'bg-up-gray-200 text-up-gray-500 cursor-not-allowed'
-                    : 'bg-up-maroon text-white hover:bg-up-maroon-dark'
-                }`}
-              >
-                Next
-              </button>
+            <div className="space-y-4">
+              {chunks.length === 0 ? (
+                <div className="text-center py-8 text-gray-600">
+                  No document chunks found. Try uploading a document.
+                </div>
+              ) : (
+                chunks.map((chunk, index) => {
+                  // Calculate the chunk number based on current page
+                  const chunkNumber = (currentPage - 1) * 10 + index + 1;
+                  
+                  return (
+                    <div 
+                      key={chunk.id} 
+                      className="border border-gray-200 rounded-lg overflow-hidden"
+                    >
+                      <button
+                        onClick={() => toggleChunk(chunk.id)}
+                        className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 focus:outline-none"
+                      >
+                        <div className="flex text-black text-lg items-center space-x-3">
+                          <span className={`transform transition-transform duration-200 text-black ${chunk.isExpanded ? 'rotate-90' : ''}`}>
+                            ▶
+                          </span>
+                          <span className="font-medium">Chunk {chunkNumber}</span>
+                        </div>
+                      </button>
+                      
+                      {chunk.isExpanded && (
+                        <div className="p-4 bg-gray-50 border-t border-gray-200">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-gray-500">Page {chunkNumber}</span>
+                          </div>
+                          <p className="text-gray-700 whitespace-pre-wrap font-mono text-sm">
+                            {chunk.text}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
-          )}
+
+            {totalPages > 1 && (
+              <div className="mt-6 flex justify-center space-x-2">
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className={`px-4 py-2 rounded-md ${
+                    currentPage === 1
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      : 'bg-up-maroon text-white hover:bg-up-maroon-dark'
+                  }`}
+                >
+                  Previous
+                </button>
+                <span className="px-4 py-2 text-gray-600">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className={`px-4 py-2 rounded-md ${
+                    currentPage === totalPages
+                      ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                      : 'bg-up-maroon text-white hover:bg-up-maroon-dark'
+                  }`}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
