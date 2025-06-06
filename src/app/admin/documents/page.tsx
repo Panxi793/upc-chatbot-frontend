@@ -9,6 +9,27 @@ interface ChunkWithExpanded extends DocumentChunk {
   isExpanded: boolean;
 }
 
+const getFilenameFromUrl = (url: string): string => {
+  try {
+    // Extract filename from the URL
+    const filename = url.split('/').pop() || '';
+    // Decode URI components (e.g., %20 to space)
+    const decoded = decodeURIComponent(filename);
+    // Remove timestamp and clean up the filename
+    // Pattern: remove numbers at start, remove dashes, capitalize words
+    const cleaned = decoded
+      .replace(/^\d+-/, '') // Remove numbers and dash at start
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+      .replace('.pdf', ''); // Remove file extension
+    
+    return cleaned;
+  } catch (e) {
+    return 'Untitled Document';
+  }
+};
+
 export default function DocumentChunksPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -124,10 +145,13 @@ export default function DocumentChunksPage() {
             {document && (
               <div className="mb-6 bg-gray-100 p-4 rounded-lg">
                 <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                  {document.description || 'Untitled Document'}
+                  {getFilenameFromUrl(document.file_url)}
                 </h2>
                 <p className="text-sm text-gray-600">
-                  Uploaded: {new Date(document.created_at).toLocaleString()}
+                  {document.description && (
+                    <span className="block mb-1">Description: {document.description}</span>
+                  )}
+                  <span>Uploaded: {new Date(document.created_at).toLocaleString()}</span>
                 </p>
               </div>
             )}
