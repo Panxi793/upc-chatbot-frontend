@@ -6,11 +6,55 @@ interface UploadModalProps {
   onUpload: (file: File, description: string) => Promise<void>;
 }
 
+const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.txt'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [description, setDescription] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const validateFile = (file: File): string | null => {
+    const extension = '.' + file.name.split('.').pop()?.toLowerCase();
+    if (!ALLOWED_FILE_TYPES.includes(extension)) {
+      return `File type not allowed. Please upload one of: ${ALLOWED_FILE_TYPES.join(', ')}`;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return `File size too large. Maximum size is ${MAX_FILE_SIZE / (1024 * 1024)}MB`;
+    }
+    return null;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) {
+      setFile(null);
+      setError(null);
+      return;
+    }
+
+    const validationError = validateFile(selectedFile);
+    if (validationError) {
+      setError(validationError);
+      setFile(null);
+      e.target.value = ''; // Reset the input
+      return;
+    }
+
+    setFile(selectedFile);
+    setError(null);
+  };
+
+  const handleRemoveFile = () => {
+    setFile(null);
+    setError(null);
+    // Reset the file input
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,12 +68,24 @@ export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalPr
 
     try {
       await onUpload(file, description);
+      // Reset form
+      setFile(null);
+      setDescription('');
       onClose();
     } catch (err) {
-      setError('Failed to upload document');
+      setError(err instanceof Error ? err.message : 'Failed to upload document');
       console.error('Upload error:', err);
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isUploading) {
+      setFile(null);
+      setDescription('');
+      setError(null);
+      onClose();
     }
   };
 
@@ -41,8 +97,9 @@ export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalPr
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-up-gray-800">Upload Document</h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-up-gray-500 hover:text-up-gray-700"
+            disabled={isUploading}
           >
             <svg
               className="w-6 h-6"
@@ -71,13 +128,52 @@ export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalPr
             <label className="block text-up-gray-700 text-sm font-bold mb-2">
               File
             </label>
-            <input
-              type="file"
-              accept=".pdf,.doc,.docx,.txt"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="w-full p-2 border border-up-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-up-maroon"
-              disabled={isUploading}
-            />
+            <div className="relative">
+              <input
+                type="file"
+                accept={ALLOWED_FILE_TYPES.join(',')}
+                onChange={handleFileChange}
+                className="w-full p-2 border border-up-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-up-maroon"
+                disabled={isUploading}
+              />
+              {file && (
+                <div className="mt-2 p-2 bg-gray-50 rounded-md">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-up-gray-700 truncate">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-up-gray-500">
+                        Size: {(file.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveFile}
+                      className="ml-2 p-1 text-red-600 hover:text-red-800 rounded-full hover:bg-red-50"
+                      disabled={isUploading}
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-up-gray-500">
+              Supported formats: PDF, DOC, DOCX, TXT (max 10MB)
+            </p>
           </div>
 
           <div className="mb-4">
@@ -97,7 +193,7 @@ export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalPr
           <div className="flex justify-end space-x-3">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-4 py-2 text-up-gray-600 hover:text-up-gray-800"
               disabled={isUploading}
             >
@@ -112,7 +208,17 @@ export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalPr
               }`}
               disabled={isUploading}
             >
-              {isUploading ? 'Uploading...' : 'Upload'}
+              {isUploading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Uploading...
+                </span>
+              ) : (
+                'Upload'
+              )}
             </button>
           </div>
         </form>
