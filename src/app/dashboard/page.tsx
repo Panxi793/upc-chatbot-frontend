@@ -1,50 +1,57 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
+import { conversationApi, SimpleConversation, Conversation, Message } from '@/services/api';
 
 export default function DashboardPage() {
   const [message, setMessage] = useState('');
-  const [conversations, setConversations] = useState([
-    { id: 1, title: 'Conversation 1', lastMessage: 'Hello, how can I help you?', timestamp: '2024-03-20T10:00:00' },
-    { id: 2, title: 'Conversation 2', lastMessage: 'What are the admission requirements?', timestamp: '2024-03-19T15:30:00' },
-    { id: 3, title: 'Conversation 3', lastMessage: 'Thank you for your help!', timestamp: '2024-03-18T09:15:00' },
-  ]);
+  const [conversations, setConversations] = useState<SimpleConversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<number | null>(null);
+  const [currentConversation, setCurrentConversation] = useState<Conversation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
   const [newConversationTitle, setNewConversationTitle] = useState('');
-  const [messages, setMessages] = useState<{
-    id: number;
-    content: string;
-    isAI: boolean;
-    timestamp: string;
-  }[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  // Simulated AI responses
-  const getAIResponse = (userMessage: string): string => {
-    const responses: { [key: string]: string } = {
-      'hello': 'Hello! How can I help you today?',
-      'hi': 'Hi there! What can I do for you?',
-      'admission': 'The admission requirements include: 1) Completed application form, 2) High school diploma, 3) Transcript of records, 4) Entrance exam results. Would you like more specific information about any of these requirements?',
-      'requirements': 'The admission requirements include: 1) Completed application form, 2) High school diploma, 3) Transcript of records, 4) Entrance exam results. Would you like more specific information about any of these requirements?',
-      'scholarship': 'UP Cebu offers various scholarships including: 1) Academic Excellence Scholarship, 2) Financial Aid Program, 3) Sports Scholarship. Which one would you like to know more about?',
-      'tuition': 'The tuition fee varies by program. For undergraduate programs, it ranges from ₱1,000 to ₱1,500 per unit. Would you like to know the specific fees for a particular program?',
-      'programs': 'UP Cebu offers various programs including: 1) Computer Science, 2) Business Administration, 3) Architecture, 4) Fine Arts. Which program interests you?',
-    };
+  // Load conversations on component mount
+  useEffect(() => {
+    loadConversations();
+  }, []);
 
-    // Convert user message to lowercase for matching
-    const lowerMessage = userMessage.toLowerCase();
-    
-    // Find the first matching keyword
-    for (const [keyword, response] of Object.entries(responses)) {
-      if (lowerMessage.includes(keyword)) {
-        return response;
-      }
+  // Load conversation details when selectedConversation changes
+  useEffect(() => {
+    if (selectedConversation) {
+      loadConversationDetails(selectedConversation);
+    } else {
+      setCurrentConversation(null);
     }
+  }, [selectedConversation]);
 
-    // Default response if no keyword matches
-    return "I'm not sure I understand. Could you please rephrase your question or ask about admission requirements, scholarships, tuition fees, or available programs?";
+  const loadConversations = async () => {
+    try {
+      setIsLoadingConversations(true);
+      const data = await conversationApi.listConversations();
+      setConversations(data);
+      setError(null);
+    } catch (error) {
+      console.error('Failed to load conversations:', error);
+      setError('Failed to load conversations');
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  };
+
+  const loadConversationDetails = async (id: number) => {
+    try {
+      const conversation = await conversationApi.getConversation(id);
+      setCurrentConversation(conversation);
+      setError(null);
+    } catch (error) {
+      console.error('Failed to load conversation details:', error);
+      setError('Failed to load conversation details');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,59 +59,71 @@ export default function DashboardPage() {
     if (!message.trim() || !selectedConversation) return;
     
     setIsLoading(true);
+    setError(null);
 
-    // Add user message
-    const userMessage = {
-      id: Date.now(),
-      content: message,
-      isAI: false,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages(prev => [...prev, userMessage]);
-
-    // Update conversation's last message
-    setConversations(prev => prev.map(conv => 
-      conv.id === selectedConversation 
-        ? { ...conv, lastMessage: message, timestamp: new Date().toISOString() }
-        : conv
-    ));
-
-    // Clear input
-    setMessage('');
-
-    // Simulate AI response delay
-    setTimeout(() => {
-      const aiResponse = {
-        id: Date.now() + 1,
-        content: getAIResponse(message),
-        isAI: true,
-        timestamp: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, aiResponse]);
+    try {
+      // Get AI response from backend
+      const aiResponse = await conversationApi.getAIResponse(selectedConversation, message);
+      
+      // Clear input
+      setMessage('');
+      
+      // Reload the conversation to get the updated messages
+      await loadConversationDetails(selectedConversation);
+      
+      // Update the conversation list to reflect the new last message timestamp
+      await loadConversations();
+      
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      setError('Failed to send message. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleCreateNewConversation = (e: React.FormEvent) => {
+  const handleCreateNewConversation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newConversationTitle.trim()) return;
 
-    const newConversation = {
-      id: conversations.length + 1,
-      title: newConversationTitle,
-      lastMessage: 'Hello! How can I help you today?',
-      timestamp: new Date().toISOString(),
-    };
+    try {
+      const newConversation = await conversationApi.createConversation(newConversationTitle);
+      
+      // Add the new conversation to the list
+      await loadConversations();
+      
+      // Select the new conversation
+      setSelectedConversation(newConversation.id);
+      
+      // Reset modal state
+      setNewConversationTitle('');
+      setIsNewConversationModalOpen(false);
+      setError(null);
+    } catch (error) {
+      console.error('Failed to create conversation:', error);
+      setError('Failed to create conversation');
+    }
+  };
 
-    setConversations([newConversation, ...conversations]);
-    setSelectedConversation(newConversation.id);
-    setNewConversationTitle('');
-    setIsNewConversationModalOpen(false);
+  const formatMessageContent = (content: string) => {
+    // Handle formatting for AI responses with bullet points and line breaks
+    return content.split('\n').map((line, index) => (
+      <div key={index} className={line.trim() === '' ? 'h-2' : ''}>
+        {line.trim() !== '' && <span>{line}</span>}
+      </div>
+    ));
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
+      
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 mx-4 mt-4 rounded">
+          {error}
+        </div>
+      )}
+      
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
@@ -125,43 +144,58 @@ export default function DashboardPage() {
               <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
                 Recent Conversations
               </h2>
-              <div className="space-y-2">
-                {conversations.map((conv) => (
-                  <button
-                    key={conv.id}
-                    onClick={() => setSelectedConversation(conv.id)}
-                    className={`w-full p-3 rounded-lg text-left transition-colors duration-200 ${
-                      selectedConversation === conv.id
-                        ? 'bg-up-maroon bg-opacity-10 border border-up-maroon'
-                        : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <h3 className="font-medium text-gray-900 truncate">{conv.title}</h3>
-                    <p className="text-sm text-gray-500 truncate mt-1">{conv.lastMessage}</p>
-                    <p className="text-xs text-gray-400 mt-1">
-                      {new Date(conv.timestamp).toLocaleDateString()}
-                    </p>
-                  </button>
-                ))}
-              </div>
+              
+              {isLoadingConversations ? (
+                <div className="space-y-2">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="animate-pulse">
+                      <div className="bg-gray-200 h-16 rounded-lg"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">No conversations yet</p>
+                  <p className="text-sm text-gray-400 mt-1">Create your first conversation</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {conversations.map((conv) => (
+                    <button
+                      key={conv.id}
+                      onClick={() => setSelectedConversation(conv.id)}
+                      className={`w-full p-3 rounded-lg text-left transition-colors duration-200 ${
+                        selectedConversation === conv.id
+                          ? 'bg-up-maroon bg-opacity-10 border border-up-maroon'
+                          : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <h3 className="font-medium text-gray-900 truncate">{conv.title}</h3>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(conv.updated_at).toLocaleDateString()}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col bg-white">
-          {selectedConversation ? (
+          {selectedConversation && currentConversation ? (
             <>
               {/* Chat Header */}
               <div className="p-4 border-b border-gray-200 bg-white">
                 <h1 className="text-xl font-semibold text-gray-900">
-                  {conversations.find(c => c.id === selectedConversation)?.title}
+                  {currentConversation.title}
                 </h1>
               </div>
 
               {/* Messages Area */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.length === 0 ? (
+                {currentConversation.messages && currentConversation.messages.length === 0 ? (
                   <div className="flex items-start gap-3">
                     <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
                       AI
@@ -176,34 +210,34 @@ export default function DashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  messages.map((msg) => (
+                  currentConversation.messages.map((msg) => (
                     <div
                       key={msg.id}
-                      className={`flex items-start gap-3 ${msg.isAI ? '' : 'justify-end'}`}
+                      className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}
                     >
-                      {msg.isAI && (
+                      {msg.role === 'assistant' && (
                         <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
                           AI
                         </div>
                       )}
-                      <div className={`flex-1 ${msg.isAI ? '' : 'flex flex-col items-end'}`}>
+                      <div className={`flex-1 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}>
                         <div
                           className={`rounded-lg p-3 max-w-[80%] ${
-                            msg.isAI
+                            msg.role === 'assistant'
                               ? 'bg-gray-100 text-gray-900'
                               : 'bg-up-maroon text-white'
                           }`}
                         >
-                          <p>{msg.content}</p>
+                          <div>{formatMessageContent(msg.content)}</div>
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
-                          {new Date(msg.timestamp).toLocaleTimeString([], {
+                          {new Date(msg.created_at).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
                         </p>
                       </div>
-                      {!msg.isAI && (
+                      {msg.role === 'user' && (
                         <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
                           U
                         </div>
@@ -267,6 +301,10 @@ export default function DashboardPage() {
                 </form>
               </div>
             </>
+          ) : selectedConversation && !currentConversation ? (
+            <div className="flex-1 flex items-center justify-center">
+              <div className="animate-spin h-8 w-8 border-4 border-up-maroon border-t-transparent rounded-full"></div>
+            </div>
           ) : (
             <div className="flex-1 flex items-center justify-center bg-gray-50">
               <div className="text-center p-8">
