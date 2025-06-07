@@ -17,6 +17,8 @@ The website is available [here](https://upchat.jed-edison.com)
 
 ![Knowledge Base Page](public/knowledge-base-page.png)
 
+![Document Chunking](public/document-chunk.png)
+
 - **File Management**: AWS S3 integration for document upload and management
 
 ## Tech Stack
@@ -65,11 +67,11 @@ This hybrid approach ensures both keyword-based and semantic matching for compre
 
 # Backend API
 
-Documentation is available [here](https://upchat.maxellmilay.com/api/docs/swagger/) via Swagger
+Documentation is available [here](https://upchat.maxellmilay.com/api/docs/swagger) via Swagger
 
 Note:
-- All endpoints require user authentication except for login and registration
-- Knowledge-base related endpoints require admin authorization
+- **ALL** endpoints require user authentication except for login and registration
+- Knowledge-base related endpoints require **Admin Authorization**
 
 ## Getting Started
 
