@@ -37,13 +37,13 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 p-4 sm:p-8 bg-white rounded-lg shadow-lg">
         <div>
-          <h2 className="text-center text-3xl font-bold text-up-maroon">
+          <h2 className="text-center text-2xl sm:text-3xl font-bold text-up-maroon">
             Create Account
           </h2>
-          <p className="mt-2 text-center text-sm text-up-gray-600">
+          <p className="mt-2 text-center text-xs sm:text-sm text-up-gray-600">
             Sign up to start chatting
           </p>
         </div>
@@ -57,7 +57,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 sm:mt-8 space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="username" className="sr-only">
@@ -68,7 +68,7 @@ export default function RegisterPage() {
                 name="username"
                 type="text"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 rounded-t-md focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 rounded-t-md focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 text-sm"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -84,7 +84,7 @@ export default function RegisterPage() {
                 name="email"
                 type="email"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 text-sm"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -100,7 +100,7 @@ export default function RegisterPage() {
                 name="password1"
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 text-sm"
                 placeholder="Password"
                 value={password1}
                 onChange={(e) => setPassword1(e.target.value)}
@@ -116,7 +116,7 @@ export default function RegisterPage() {
                 name="password2"
                 type="password"
                 required
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 rounded-b-md focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 rounded-b-md focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 text-sm"
                 placeholder="Confirm Password"
                 value={password2}
                 onChange={(e) => setPassword2(e.target.value)}
@@ -138,7 +138,7 @@ export default function RegisterPage() {
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-up-gray-600">
+            <p className="text-xs sm:text-sm text-up-gray-600">
               Already have an account?{' '}
               <Link href="/login" className="font-medium text-up-maroon hover:text-up-maroon-dark">
                 Sign in
