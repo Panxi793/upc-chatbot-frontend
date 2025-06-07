@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/services/api';
 import Link from 'next/link';
+import { useUser } from '@/contexts/UserContext';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { setUser } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +21,8 @@ export default function LoginPage() {
 
     try {
       await authApi.login(username, password);
+      const userInfo = await authApi.getCurrentUser();
+      setUser(userInfo);
       router.push('/dashboard');
     } catch (err) {
       setError('Invalid username or password');
