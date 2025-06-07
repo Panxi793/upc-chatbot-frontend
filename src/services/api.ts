@@ -106,8 +106,10 @@ export const authApi = {
     if (!response.ok) {
       throw new Error('Login failed');
     }
-
-    return response.json();
+    const data = await response.json();
+    // Store the access token
+    localStorage.setItem('token', data.access);
+    return data;
   },
 
   register: async (username: string, email: string, password1: string, password2: string): Promise<void> => {
@@ -127,13 +129,15 @@ export const authApi = {
 
   getCurrentUser: async () => {
     const response = await fetch(`${API_BASE_URL}/auth/user/`, {
-      credentials: 'include',
+      headers: getHeaders(),
     });
-
     if (!response.ok) {
-      throw new Error('Failed to get current user');
+      if (response.status === 401) {
+        window.location.href = '/login';
+        throw new Error('Session expired');
+      }
+      throw new Error('Failed to get user info');
     }
-
     return response.json();
   },
 
