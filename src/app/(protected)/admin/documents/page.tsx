@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Document, DocumentChunk, documentApi } from '@/services/api';
+import { Suspense } from 'react';
 
 interface ChunkWithExpanded extends DocumentChunk {
   isExpanded: boolean;
@@ -29,7 +30,7 @@ const getFilenameFromUrl = (url: string): string => {
   }
 };
 
-export default function DocumentChunksPage() {
+function DocumentChunksPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const documentId = searchParams.get('id');
@@ -228,5 +229,13 @@ export default function DocumentChunksPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DocumentChunksPage />
+    </Suspense>
   );
 } 
