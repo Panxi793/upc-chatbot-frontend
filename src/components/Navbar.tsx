@@ -10,7 +10,7 @@ export default function Navbar() {
   return (
     <nav className="bg-up-maroon shadow-lg">
       <div className="container mx-auto px-2">
-        <div className="flex justify-between items-center h-24">
+        <div className="flex justify-between items-center h-16">
           <Link href="/dashboard" className="flex items-center">
             <div className="flex items-center">
               <div className="relative w-20 h-20 flex items-center">
@@ -23,18 +23,18 @@ export default function Navbar() {
                   priority
                 />
               </div>
-              <span className="text-white text-2xl font-bold ml-2">UPC Chatbot</span>
+              <span className="text-white text-xl font-bold ml-2">UPC Chatbot</span>
             </div>
           </Link>
           
-          <div className="hidden md:flex space-x-6">
+          <div className="hidden mt-2 md:flex space-x-6">
             <Link
               href="/dashboard"
               className={`${
                 pathname === '/dashboard'
                   ? 'text-white border-b-2 border-white'
                   : 'text-white/90 hover:text-white hover:border-b-2 hover:border-white/50'
-              } transition-colors duration-200 h-24 flex items-center text-lg`}
+              } transition-colors duration-200 h-full flex items-center text-md`}
             >
               Dashboard
             </Link>
@@ -44,7 +44,7 @@ export default function Navbar() {
                 pathname === '/admin/knowledge-base'
                   ? 'text-white border-b-2 border-white'
                   : 'text-white/90 hover:text-white hover:border-b-2 hover:border-white/50'
-              } transition-colors duration-200 h-24 flex items-center text-lg`}
+              } transition-colors duration-200 h-full flex items-center text-md`}
             >
               Knowledge Base
             </Link>
@@ -56,7 +56,7 @@ export default function Navbar() {
                 // TODO: Implement logout logic
                 window.location.href = '/login';
               }}
-              className="text-white/90 hover:text-white transition-colors duration-200 px-6 py-2 rounded-md border-2 border-white/30 hover:border-white/60 text-lg"
+              className="text-white/90 hover:text-white transition-colors duration-200 px-4 py-1 rounded-md border-2 border-white/30 hover:border-white/60 text-xs"
             >
               Logout
             </button>
