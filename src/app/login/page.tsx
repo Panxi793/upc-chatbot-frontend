@@ -18,7 +18,7 @@ export default function LoginPage() {
 
     try {
       await authApi.login(username, password);
-      router.push('/admin/dashboard');
+      router.push('/dashboard');
     } catch (err) {
       setError('Invalid username or password');
       console.error('Login error:', err);
