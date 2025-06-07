@@ -39,7 +39,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 relative bg-gray-50">
       <div className="absolute inset-0 w-full h-full z-0">
-        <img src="/upc_image.webp" alt="UP Oblation" className="w-full h-full object-cover object-center opacity-5" />
+        <img src="/upc_image.webp" alt="UP Oblation" className="w-full h-full object-cover object-center opacity-10" />
       </div>
       <div className="max-w-md w-full space-y-8 p-4 sm:p-8 bg-white bg-opacity-90 rounded-lg shadow-lg z-10">
         <div>
