@@ -21,6 +21,8 @@ module.exports = {
           800: '#1F2937',
           900: '#111827',
         },
+        'foreground': '#111827',
+        'background': '#F3F4F6',
       },
     },
   },

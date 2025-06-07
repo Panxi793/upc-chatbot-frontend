@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import UploadModal from '@/components/UploadModal';
 import { Document, documentApi } from '@/services/api';
+import { uploadToS3 } from '@/services/aws';
 
 export default function KnowledgeBasePage() {
   const router = useRouter();
@@ -36,22 +37,14 @@ export default function KnowledgeBasePage() {
       setError(null);
       setIsLoading(true);
       
-      const formData = new FormData();
-      formData.append('file', file);
+      const uploadResult = await uploadToS3(file, 'documents/');
       
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to upload file');
+      if (!uploadResult.success || !uploadResult.url) {
+        throw new Error(uploadResult.error || 'Failed to upload file');
       }
 
-      const { file_url } = await response.json();
-
       await documentApi.createDocument({
-        file_url,
+        file_url: uploadResult.url,
         description,
       });
 
