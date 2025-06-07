@@ -149,8 +149,10 @@ export const authApi = {
 
 export const documentApi = {
   // List all documents
-  listDocuments: async (): Promise<Document[]> => {
-    const response = await fetch(`${API_BASE_URL}/ai/document/`, {
+  listDocuments: async (page: number = 1): Promise<DocumentResponse> => {
+    const url = new URL(`${API_BASE_URL}/ai/document/`);
+    url.searchParams.append('page', page.toString());
+    const response = await fetch(url.toString(), {
       headers: getHeaders(),
     });
     if (!response.ok) {
@@ -162,7 +164,8 @@ export const documentApi = {
       throw new Error('Failed to fetch documents');
     }
     const data: DocumentResponse = await response.json();
-    return data.objects; // Return just the documents array
+    
+    return data; // Return just the documents array
   },
 
   // Get a single document

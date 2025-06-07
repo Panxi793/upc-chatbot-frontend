@@ -9,17 +9,21 @@ import { uploadToS3 } from '@/services/aws';
 export default function KnowledgeBasePage() {
   const router = useRouter();
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [deleteDocId, setDeleteDocId] = useState<number | null>(null);
 
   // Fetch documents
-  const fetchDocuments = async () => {
+  const fetchDocuments = async (page: number = 1) => {
     try {
       setError(null);
-      const docs = await documentApi.listDocuments();
-      setDocuments(docs);
+      const docs = await documentApi.listDocuments(page);
+      setDocuments(docs.objects);
+      setTotalPages(docs.num_pages);
+      setCurrentPage(docs.current_page);
     } catch (err) {
       console.error('Error fetching documents:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch documents');
@@ -29,8 +33,8 @@ export default function KnowledgeBasePage() {
   };
 
   useEffect(() => {
-    fetchDocuments();
-  }, []);
+    fetchDocuments(currentPage);
+  }, [currentPage]);
 
   const handleUpload = async (file: File, description: string) => {
     try {
@@ -111,32 +115,72 @@ export default function KnowledgeBasePage() {
                 No documents found. Try uploading a document.
               </div>
             ) : (
-              <div className="space-y-4">
-                {documents.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
-                  >
-                    <button
-                      onClick={() => handleDocumentClick(doc.id)}
-                      className="flex-1 text-left"
+              <>
+                <div className="space-y-4">
+                  {documents.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="flex justify-between items-center bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors duration-200"
                     >
-                      <h3 className="font-medium text-gray-900">
-                        {doc.description || 'Untitled Document'}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        Uploaded: {new Date(doc.created_at).toLocaleString()}
-                      </p>
+                      <button
+                        onClick={() => handleDocumentClick(doc.id)}
+                        className="flex-1 text-left"
+                      >
+                        <h3 className="font-medium text-gray-900">
+                          {doc.description || 'Untitled Document'}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          Uploaded: {new Date(doc.created_at).toLocaleString()}
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => setDeleteDocId(doc.id)}
+                        className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-200"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="mt-6 flex justify-center items-center space-x-2">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 rounded border border-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-80 disabled:cursor-not-allowed bg-gray-200 text-gray-900 hover:bg-gray-300"
+                    >
+                      Previous
                     </button>
+                    
+                    <div className="flex items-center space-x-1">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                        <button
+                          key={page}
+                          onClick={() => setCurrentPage(page)}
+                          disabled={currentPage === page}
+                          className={`px-3 py-1 rounded border border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-150 ${
+                            currentPage === page
+                              ? 'bg-up-maroon text-white'
+                              : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                          } ${currentPage === page ? 'disabled:opacity-100' : ''}`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                    </div>
+
                     <button
-                      onClick={() => setDeleteDocId(doc.id)}
-                      className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-200"
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1 rounded border border-gray-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:opacity-80 disabled:cursor-not-allowed bg-gray-200 text-gray-900 hover:bg-gray-300"
                     >
-                      Delete
+                      Next
                     </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
           </div>
         </div>
