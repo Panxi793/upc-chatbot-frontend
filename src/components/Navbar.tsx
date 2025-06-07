@@ -44,7 +44,7 @@ export default function Navbar() {
             >
               Dashboard
             </Link>
-            {user?.username === 'admin' && (
+            {user?.username === process.env.NEXT_PUBLIC_ADMIN_USERNAME && (
               <Link
                 href="/admin/knowledge-base"
                 className={`${
