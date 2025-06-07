@@ -56,7 +56,7 @@ export default function Navbar() {
                 // TODO: Implement logout logic
                 window.location.href = '/login';
               }}
-              className="text-white/90 hover:text-white transition-colors duration-200 px-4 py-1 rounded-md border-2 border-white/30 hover:border-white/60 text-xs"
+              className="text-white/90 hover:text-white transition-colors duration-200 px-4 py-1 rounded-md border-2 border-white/30 hover:border-white/60 text-sm"
             >
               Logout
             </button>
