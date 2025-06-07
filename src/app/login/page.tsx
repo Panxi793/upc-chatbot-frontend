@@ -29,8 +29,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 p-4 sm:p-8 bg-white rounded-lg shadow-lg">
+    <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 relative bg-gray-50">
+      <div className="absolute inset-0 w-full h-full z-0">
+        <img src="/upc_image.webp" alt="UP Oblation" className="w-full h-full object-cover object-center opacity-5" />
+      </div>
+      <div className="max-w-md w-full space-y-8 p-4 sm:p-8 bg-white bg-opacity-90 rounded-lg shadow-lg z-10">
         <div>
           <h2 className="text-center text-2xl sm:text-3xl font-bold text-up-maroon">
             UPC Chatbot
