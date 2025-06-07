@@ -73,6 +73,8 @@ Note:
 - **ALL** endpoints require user authentication except for login and registration
 - Knowledge-base related endpoints require **Admin Authorization**
 
+Backend repository is also available [here](https://github.com/maxellmilay/upc-chatbot-backend)
+
 ## Getting Started
 
 ### Prerequisites
