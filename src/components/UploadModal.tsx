@@ -184,7 +184,7 @@ export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalPr
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full p-2 border border-up-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-up-maroon"
+              className="w-full p-2 border text-black border-up-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-up-maroon"
               placeholder="Enter document description"
               disabled={isUploading}
             />
