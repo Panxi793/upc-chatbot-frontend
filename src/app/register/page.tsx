@@ -49,8 +49,11 @@ export default function RegisterPage() {
         </div>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded-md text-sm">
+          <div className="bg-red-100 mb-2 text-xs text-red-700 p-3 rounded-md whitespace-pre-line">
             {error}
+            <p>
+              It might be because password is too short, it must contain at least 8 characters, or it is too common, or it is entirely numeric.
+            </p>
           </div>
         )}
 
