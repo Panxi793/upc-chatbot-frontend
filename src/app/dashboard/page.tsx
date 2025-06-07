@@ -56,8 +56,8 @@ export default function DashboardPage() {
       {currentConversation ? (
         <>
           {/* Chat Header */}
-          <div className="p-4 border-b border-gray-200 bg-white">
-            <h1 className="text-xl font-semibold text-gray-900">
+          <div className="p-2 md:p-4 border-b border-gray-200 bg-white">
+            <h1 className="md:text-xl pl-2 sm:text-md text-sm font-semibold text-gray-900">
               {currentConversation.title}
             </h1>
           </div>
@@ -65,15 +65,15 @@ export default function DashboardPage() {
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {currentConversation.messages && currentConversation.messages.length === 0 ? (
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
                   AI
                 </div>
                 <div className="flex-1">
                   <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
-                    <p className="text-gray-900">Hello! How can I help you today?</p>
+                    <p className="text-gray-900 text-[0.8rem] sm:text-xs md:text-sm">Hello! How can I help you today?</p>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-[0.6rem] sm:text-xs text-gray-500 mt-1">
                     {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -82,7 +82,7 @@ export default function DashboardPage() {
               currentConversation.messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`flex items-start gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}
+                  className={`flex items-start gap-2 ${msg.role === 'user' ? 'justify-end' : ''}`}
                 >
                   {msg.role === 'assistant' && (
                     <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
@@ -91,7 +91,7 @@ export default function DashboardPage() {
                   )}
                   <div className={`flex-1 ${msg.role === 'user' ? 'flex flex-col items-end' : ''}`}>
                     <div
-                      className={`rounded-lg p-3 max-w-[80%] ${
+                      className={`rounded-lg p-3 text-[0.8rem] sm:text-xs md:text-sm max-w-[80%] ${
                         msg.role === 'assistant'
                           ? 'bg-gray-100 text-gray-900'
                           : 'bg-up-maroon text-white'
@@ -99,7 +99,7 @@ export default function DashboardPage() {
                     >
                       <div>{formatMessageContent(msg.content)}</div>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-[0.6rem] sm:text-xs text-gray-500 mt-1">
                       {new Date(msg.created_at).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
@@ -115,7 +115,7 @@ export default function DashboardPage() {
               ))
             )}
             {isLoading && (
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
                   AI
                 </div>
@@ -146,13 +146,13 @@ export default function DashboardPage() {
               <button
                 type="submit"
                 disabled={isLoading || !message.trim()}
-                className={`px-6 py-2 text-sm bg-up-maroon text-white rounded-lg hover:bg-up-maroon-dark transition-colors duration-200 flex items-center gap-2 ${
+                className={`px-2 sm:px-6 py-2 text-[0.8rem] sm:text-xs md:text-sm bg-up-maroon text-white rounded-lg hover:bg-up-maroon-dark transition-colors duration-200 flex items-center gap-1 sm:gap-2 ${
                   (isLoading || !message.trim()) ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
                 {isLoading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin h-3 w-3 sm:h-5 sm:w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>

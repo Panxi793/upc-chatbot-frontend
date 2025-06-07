@@ -73,7 +73,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Sidebar Toggle Button - Mobile Only */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="lg:hidden fixed bottom-4 right-4 z-50 bg-up-maroon text-white p-3 rounded-full shadow-lg hover:bg-up-maroon-dark transition-colors duration-200"
+          className="lg:hidden fixed bottom-16 right-4 z-50 bg-up-maroon text-white p-1 rounded-full shadow-lg hover:bg-up-maroon-dark transition-colors duration-200"
         >
           {isSidebarOpen ? (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +90,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         <div className={`fixed lg:static inset-y-0 left-0 z-40 w-80 bg-white border-r border-gray-200 flex flex-col transform transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}>
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4">
             <button 
               onClick={() => setIsNewConversationModalOpen(true)}
               className="w-full bg-up-maroon text-white py-3 px-4 rounded-lg hover:bg-up-maroon-dark transition-colors duration-200 flex items-center justify-center gap-2 text-sm"
@@ -103,7 +103,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
           
           <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-gray-200">
+            <div className="pl-4 pt-2 ">
               <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
                 Recent Conversations
               </h2>
