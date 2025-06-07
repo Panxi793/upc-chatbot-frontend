@@ -16,6 +16,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/upc_image.webp" type="image/webp" />
+      </head>
       <body className={inter.className}>
         {children}
       </body>
