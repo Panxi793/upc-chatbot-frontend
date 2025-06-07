@@ -6,7 +6,7 @@ interface UploadModalProps {
   onUpload: (file: File, description: string) => Promise<void>;
 }
 
-const ALLOWED_FILE_TYPES = ['.pdf', '.doc', '.docx', '.txt'];
+const ALLOWED_FILE_TYPES = ['.pdf'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalProps) {
@@ -131,7 +131,7 @@ export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalPr
             <div className="relative">
               <input
                 type="file"
-                accept={ALLOWED_FILE_TYPES.join(',')}
+                accept=".pdf"
                 onChange={handleFileChange}
                 className="w-full p-2 border border-up-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-up-maroon"
                 disabled={isUploading}
@@ -172,7 +172,7 @@ export default function UploadModal({ isOpen, onClose, onUpload }: UploadModalPr
               )}
             </div>
             <p className="mt-1 text-xs text-up-gray-500">
-              Supported formats: PDF, DOC, DOCX, TXT (max 10MB)
+              Supported format: PDF (max 10MB)
             </p>
           </div>
 

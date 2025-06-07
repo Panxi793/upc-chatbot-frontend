@@ -12,6 +12,7 @@ export default function KnowledgeBasePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [deleteDocId, setDeleteDocId] = useState<number | null>(null);
 
   // Fetch documents
   const fetchDocuments = async () => {
@@ -60,8 +61,6 @@ export default function KnowledgeBasePage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this document?')) return;
-
     try {
       setError(null);
       await documentApi.deleteDocument(id);
@@ -130,7 +129,7 @@ export default function KnowledgeBasePage() {
                       </p>
                     </button>
                     <button
-                      onClick={() => handleDelete(doc.id)}
+                      onClick={() => setDeleteDocId(doc.id)}
                       className="ml-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors duration-200"
                     >
                       Delete
@@ -148,6 +147,32 @@ export default function KnowledgeBasePage() {
         onClose={() => setIsUploadModalOpen(false)}
         onUpload={handleUpload}
       />
+
+      {deleteDocId !== null && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-sm">
+            <h2 className="text-lg font-bold text-up-gray-800 mb-4">Delete Document</h2>
+            <p className="mb-6 text-up-gray-700">Are you sure you want to delete this document? This action cannot be undone.</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setDeleteDocId(null)}
+                className="px-4 py-2 text-up-gray-600 hover:text-up-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  await handleDelete(deleteDocId);
+                  setDeleteDocId(null);
+                }}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 
