@@ -14,15 +14,75 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
   const [newConversationTitle, setNewConversationTitle] = useState('');
+  const [messages, setMessages] = useState<{
+    id: number;
+    content: string;
+    isAI: boolean;
+    timestamp: string;
+  }[]>([]);
+
+  // Simulated AI responses
+  const getAIResponse = (userMessage: string): string => {
+    const responses: { [key: string]: string } = {
+      'hello': 'Hello! How can I help you today?',
+      'hi': 'Hi there! What can I do for you?',
+      'admission': 'The admission requirements include: 1) Completed application form, 2) High school diploma, 3) Transcript of records, 4) Entrance exam results. Would you like more specific information about any of these requirements?',
+      'requirements': 'The admission requirements include: 1) Completed application form, 2) High school diploma, 3) Transcript of records, 4) Entrance exam results. Would you like more specific information about any of these requirements?',
+      'scholarship': 'UP Cebu offers various scholarships including: 1) Academic Excellence Scholarship, 2) Financial Aid Program, 3) Sports Scholarship. Which one would you like to know more about?',
+      'tuition': 'The tuition fee varies by program. For undergraduate programs, it ranges from ₱1,000 to ₱1,500 per unit. Would you like to know the specific fees for a particular program?',
+      'programs': 'UP Cebu offers various programs including: 1) Computer Science, 2) Business Administration, 3) Architecture, 4) Fine Arts. Which program interests you?',
+    };
+
+    // Convert user message to lowercase for matching
+    const lowerMessage = userMessage.toLowerCase();
+    
+    // Find the first matching keyword
+    for (const [keyword, response] of Object.entries(responses)) {
+      if (lowerMessage.includes(keyword)) {
+        return response;
+      }
+    }
+
+    // Default response if no keyword matches
+    return "I'm not sure I understand. Could you please rephrase your question or ask about admission requirements, scholarships, tuition fees, or available programs?";
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!message.trim()) return;
+    if (!message.trim() || !selectedConversation) return;
     
     setIsLoading(true);
-    // TODO: Implement message sending logic
+
+    // Add user message
+    const userMessage = {
+      id: Date.now(),
+      content: message,
+      isAI: false,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, userMessage]);
+
+    // Update conversation's last message
+    setConversations(prev => prev.map(conv => 
+      conv.id === selectedConversation 
+        ? { ...conv, lastMessage: message, timestamp: new Date().toISOString() }
+        : conv
+    ));
+
+    // Clear input
     setMessage('');
-    setIsLoading(false);
+
+    // Simulate AI response delay
+    setTimeout(() => {
+      const aiResponse = {
+        id: Date.now() + 1,
+        content: getAIResponse(message),
+        isAI: true,
+        timestamp: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, aiResponse]);
+      setIsLoading(false);
+    }, 1000);
   };
 
   const handleCreateNewConversation = (e: React.FormEvent) => {
@@ -101,30 +161,72 @@ export default function DashboardPage() {
 
               {/* Messages Area */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {/* Example messages - replace with actual messages */}
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
-                    AI
-                  </div>
-                  <div className="flex-1">
-                    <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
-                      <p className="text-gray-900">Hello! How can I help you today?</p>
+                {messages.length === 0 ? (
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
+                      AI
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">10:00 AM</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 justify-end">
-                  <div className="flex-1">
-                    <div className="bg-up-maroon text-white rounded-lg p-3 max-w-[80%] ml-auto">
-                      <p>I have a question about admission requirements.</p>
+                    <div className="flex-1">
+                      <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
+                        <p className="text-gray-900">Hello! How can I help you today?</p>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1 text-right">10:01 AM</p>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
-                    U
+                ) : (
+                  messages.map((msg) => (
+                    <div
+                      key={msg.id}
+                      className={`flex items-start gap-3 ${msg.isAI ? '' : 'justify-end'}`}
+                    >
+                      {msg.isAI && (
+                        <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
+                          AI
+                        </div>
+                      )}
+                      <div className={`flex-1 ${msg.isAI ? '' : 'flex flex-col items-end'}`}>
+                        <div
+                          className={`rounded-lg p-3 max-w-[80%] ${
+                            msg.isAI
+                              ? 'bg-gray-100 text-gray-900'
+                              : 'bg-up-maroon text-white'
+                          }`}
+                        >
+                          <p>{msg.content}</p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(msg.timestamp).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </p>
+                      </div>
+                      {!msg.isAI && (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-medium">
+                          U
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                {isLoading && (
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-up-maroon flex items-center justify-center text-white font-medium">
+                      AI
+                    </div>
+                    <div className="flex-1">
+                      <div className="bg-gray-100 rounded-lg p-3 max-w-[80%]">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Input Area */}
