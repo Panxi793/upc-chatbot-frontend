@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [isNewConversationModalOpen, setIsNewConversationModalOpen] = useState(false);
   const [newConversationTitle, setNewConversationTitle] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Load conversations on component mount
   useEffect(() => {
@@ -124,9 +125,27 @@ export default function DashboardPage() {
         </div>
       )}
       
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Sidebar Toggle Button - Mobile Only */}
+        <button
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className="lg:hidden fixed bottom-4 right-4 z-50 bg-up-maroon text-white p-3 rounded-full shadow-lg hover:bg-up-maroon-dark transition-colors duration-200"
+        >
+          {isSidebarOpen ? (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          )}
+        </button>
+
         {/* Sidebar */}
-        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <div className={`fixed lg:static inset-y-0 left-0 z-40 w-80 bg-white border-r border-gray-200 flex flex-col transform transition-transform duration-300 ease-in-out ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}>
           <div className="p-4 border-b border-gray-200">
             <button 
               onClick={() => setIsNewConversationModalOpen(true)}
@@ -163,7 +182,10 @@ export default function DashboardPage() {
                   {conversations.map((conv) => (
                     <button
                       key={conv.id}
-                      onClick={() => setSelectedConversation(conv.id)}
+                      onClick={() => {
+                        setSelectedConversation(conv.id);
+                        setIsSidebarOpen(false); // Close sidebar on mobile after selection
+                      }}
                       className={`w-full p-3 rounded-lg text-left transition-colors duration-200 ${
                         selectedConversation === conv.id
                           ? 'bg-up-maroon bg-opacity-10 border border-up-maroon'
@@ -181,6 +203,14 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+
+        {/* Overlay for mobile sidebar */}
+        {isSidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col bg-white">
