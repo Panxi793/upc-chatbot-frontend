@@ -85,6 +85,13 @@ export interface AIResponse {
   }>;
 }
 
+interface RegisterRequest {
+  username: string;
+  email: string;
+  password1: string;
+  password2: string;
+}
+
 export const authApi = {
   login: async (username: string, password: string): Promise<LoginResponse> => {
     const response = await fetch(`${API_BASE_URL}/auth/login/`, {
@@ -93,31 +100,45 @@ export const authApi = {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ username, password }),
+      credentials: 'include',
     });
+
     if (!response.ok) {
       throw new Error('Login failed');
     }
-    const data = await response.json();
-    // Store the access token
-    localStorage.setItem('token', data.access);
-    return data;
+
+    return response.json();
+  },
+
+  register: async (username: string, email: string, password1: string, password2: string): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/auth/register/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, email, password1, password2 }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Registration failed');
+    }
   },
 
   getCurrentUser: async () => {
     const response = await fetch(`${API_BASE_URL}/auth/user/`, {
-      headers: getHeaders(),
+      credentials: 'include',
     });
+
     if (!response.ok) {
-      if (response.status === 401) {
-        window.location.href = '/login';
-        throw new Error('Session expired');
-      }
-      throw new Error('Failed to get user info');
+      throw new Error('Failed to get current user');
     }
+
     return response.json();
   },
 
   logout: () => {
+    // Clear any stored tokens or user data
     localStorage.removeItem('token');
   },
 };

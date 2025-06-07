@@ -5,9 +5,11 @@ import { useRouter } from 'next/navigation';
 import { authApi } from '@/services/api';
 import Link from 'next/link';
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
+  const [password1, setPassword1] = useState('');
+  const [password2, setPassword2] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -15,14 +17,20 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (password1 !== password2) {
+      setError('Passwords do not match');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      await authApi.login(username, password);
-      router.push('/dashboard');
+      await authApi.register(username, email, password1, password2);
+      router.push('/login');
     } catch (err) {
-      setError('Invalid username or password');
-      console.error('Login error:', err);
+      setError('Registration failed. Please try again.');
+      console.error('Registration error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -33,10 +41,10 @@ export default function LoginPage() {
       <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow-lg">
         <div>
           <h2 className="text-center text-3xl font-bold text-up-maroon">
-            UPC Chatbot
+            Create Account
           </h2>
           <p className="mt-2 text-center text-sm text-up-gray-600">
-            Please sign in to continue
+            Sign up to start chatting
           </p>
         </div>
 
@@ -65,18 +73,50 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="email" className="sr-only">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 sm:text-sm"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="password1" className="sr-only">
                 Password
               </label>
               <input
-                id="password"
-                name="password"
+                id="password1"
+                name="password1"
+                type="password"
+                required
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 sm:text-sm"
+                placeholder="Password"
+                value={password1}
+                onChange={(e) => setPassword1(e.target.value)}
+                disabled={isLoading}
+              />
+            </div>
+            <div>
+              <label htmlFor="password2" className="sr-only">
+                Confirm Password
+              </label>
+              <input
+                id="password2"
+                name="password2"
                 type="password"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-up-gray-300 placeholder-up-gray-500 text-up-gray-900 rounded-b-md focus:outline-none focus:ring-up-maroon focus:border-up-maroon focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Confirm Password"
+                value={password2}
+                onChange={(e) => setPassword2(e.target.value)}
                 disabled={isLoading}
               />
             </div>
@@ -90,15 +130,15 @@ export default function LoginPage() {
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Creating account...' : 'Create account'}
             </button>
           </div>
 
           <div className="text-center">
             <p className="text-sm text-up-gray-600">
-              Don't have an account?{' '}
-              <Link href="/register" className="font-medium text-up-maroon hover:text-up-maroon-dark">
-                Sign up
+              Already have an account?{' '}
+              <Link href="/login" className="font-medium text-up-maroon hover:text-up-maroon-dark">
+                Sign in
               </Link>
             </p>
           </div>
