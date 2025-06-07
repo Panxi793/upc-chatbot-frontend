@@ -36,14 +36,14 @@ export default function KnowledgeBasePage() {
       setError(null);
       setIsLoading(true);
       
-      const uploadResult = await uploadToS3(file, 'documents/');
+      const uploadResult = await uploadToS3(file);
       
-      if (!uploadResult.success || !uploadResult.url) {
+      if (!uploadResult.file_url) {
         throw new Error(uploadResult.error || 'Failed to upload file');
       }
 
       await documentApi.createDocument({
-        file_url: uploadResult.url,
+        file_url: uploadResult.file_url,
         description,
       });
 

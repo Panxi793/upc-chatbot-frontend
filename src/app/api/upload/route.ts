@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
@@ -27,6 +26,9 @@ export async function POST(request: Request) {
     const fileName = `${timestamp}-${file.name}`;
     const key = `knowledge-base/${fileName}`;
 
+    console.log('Uploading to bucket:', process.env.AWS_S3_BUCKET);
+    console.log('Upload key:', key);
+
     // Get the file buffer
     const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -38,15 +40,11 @@ export async function POST(request: Request) {
       ContentType: file.type,
     });
 
-    // Upload to S3
+    // Actually send the command to S3
     await s3Client.send(command);
-
-    // Generate a signed URL for the uploaded file
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 });
 
     return NextResponse.json({
       file_url: key,
-      url: url,
     });
   } catch (error) {
     console.error('Upload error:', error);
