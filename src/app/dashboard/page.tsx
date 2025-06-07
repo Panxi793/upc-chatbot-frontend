@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Navbar from '@/components/Navbar';
 import { conversationApi, SimpleConversation, Conversation, Message } from '@/services/api';
 
 export default function DashboardPage() {
@@ -117,7 +116,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
       
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 mx-4 mt-4 rounded">

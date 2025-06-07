@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '@/components/Navbar';
 import UploadModal from '@/components/UploadModal';
 import { Document, documentApi } from '@/services/api';
 import { uploadToS3 } from '@/services/aws';
@@ -79,7 +78,6 @@ export default function KnowledgeBasePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
       <div className="container mx-auto p-8">
         <div className="bg-white rounded-lg shadow-lg relative">
           {isLoading && (
