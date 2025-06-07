@@ -109,6 +109,7 @@ export const authApi = {
     const data = await response.json();
     // Store the access token
     localStorage.setItem('token', data.access);
+    console.log(data,'sd');
     return data;
   },
 

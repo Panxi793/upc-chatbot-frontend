@@ -73,7 +73,7 @@ function DashboardLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Sidebar Toggle Button - Mobile Only */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="lg:hidden fixed bottom-16 right-4 z-50 bg-up-maroon text-white p-1 rounded-full shadow-lg hover:bg-up-maroon-dark transition-colors duration-200"
+          className={`lg:hidden fixed ${selectedConversation ? "bottom-16" : "bottom-4"} right-4 z-50 bg-up-maroon text-white p-1 rounded-full shadow-lg hover:bg-up-maroon-dark transition-colors duration-200`}
         >
           {isSidebarOpen ? (
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
